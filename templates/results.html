@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultados da Análise WordPress</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='assets/css/custom.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='assets/img/logotipo-wordpress.png') }}">
+</head>
+<body>
+<header class="py-3">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <img src="{{ url_for('static', filename='assets/img/logotipo-linehostcloud.png') }}" alt="LineHost Cloud" class="logo">
+            <div class="d-flex gap-2">
+                <a href="/" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-house-door"></i> Início
+                </a>
+                <a href="#" onclick="window.print()" class="btn btn-outline-light btn-sm d-none d-md-inline-block">
+                    <i class="bi bi-printer"></i> Imprimir
+                </a>
+            </div>
+        </div>
+    </div>
+</header>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="results-container">
+                <div class="header">
+{#                    <div class="logo-badge mb-3">#}
+{#                        <img src="{{ url_for('static', filename='assets/img/logotipo-wordpress.png') }}" alt="WordPress" width="60">#}
+{#                    </div>#}
+                    <h1>Resultados da Análise</h1>
+                    <div class="url-badge">
+                        <i class="bi bi-globe me-2"></i>{{ results.url }}
+                    </div>
+                    <div class="scan-meta">
+                        <span><i class="bi bi-clock me-1"></i> {{ scan_time }}</span>
+                    </div>
+                </div>
+
+                <!-- Summary Cards -->
+                <div class="summary-cards">
+                    <div class="summary-card info">
+                        <div class="summary-icon">
+                            <i class="bi bi-wordpress"></i>
+                        </div>
+                        <div class="summary-title">WordPress</div>
+                        <div class="summary-value">{% if results.wordpress_version %}{{ results.wordpress_version }}{% else %}?{% endif %}</div>
+                    </div>
+
+                    <div class="summary-card {% if results.vulnerabilities|length > 0 %}critical{% else %}success{% endif %}">
+                        <div class="summary-icon">
+                            <i class="bi bi-shield-exclamation"></i>
+                        </div>
+                        <div class="summary-title">Vulnerabilidades</div>
+                        <div class="summary-value">{{ results.vulnerabilities|length }}</div>
+                    </div>
+
+                    <div class="summary-card {% if results.improvements|length > 3 %}warning{% elif results.improvements|length > 0 %}info{% else %}success{% endif %}">
+                        <div class="summary-icon">
+                            <i class="bi bi-lightbulb"></i>
+                        </div>
+                        <div class="summary-title">Melhorias</div>
+                        <div class="summary-value">{{ results.improvements|length }}</div>
+                    </div>
+
+                    <div class="summary-card info">
+                        <div class="summary-icon">
+                            <i class="bi bi-puzzle"></i>
+                        </div>
+                        <div class="summary-title">Plugins</div>
+                        <div class="summary-value">{{ results.plugins|length }}</div>
+                    </div>
+                </div>
+
+                <!-- WordPress Version -->
+                <div class="section">
+                    <h3 class="section-title"><i class="bi bi-wordpress me-2"></i>Informações do WordPress</h3>
+                    {% if results.wordpress_version %}
+                    <p><i class="bi bi-info-circle me-2"></i><strong>Versão:</strong> {{ results.wordpress_version }}</p>
+                    {% else %}
+                    <p><i class="bi bi-question-circle me-2"></i><strong>Versão:</strong> Desconhecida</p>
+                    {% endif %}
+                </div>
+
+                <!-- Theme Information -->
+                <div class="section">
+                    <h3 class="section-title"><i class="bi bi-palette me-2"></i>Tema</h3>
+                    {% if results.theme %}
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="theme-icon me-3">
+                                    <i class="bi bi-brush-fill"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1">{{ results.theme.name }}</h5>
+                                    {% if results.theme.url %}
+                                    <a href="{{ results.theme.url }}" target="_blank" class="text-decoration-none">
+                                        <i class="bi bi-box-arrow-up-right me-1"></i>Ver tema
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>Nenhum tema detectado
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Plugins -->
+                <div class="section">
+                    <h3 class="section-title"><i class="bi bi-puzzle me-2"></i>Plugins</h3>
+                    {% if results.plugins %}
+                    <div class="plugin-legend mb-3">
+                        <div class="d-flex flex-wrap gap-3">
+                            <div class="legend-item">
+                                <span class="legend-color" style="background-color: #198754;"></span>
+                                <span>Ativo</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background-color: #6c757d;"></span>
+                                <span>Inativo</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background-color: #0dcaf0;"></span>
+                                <span>Status Desconhecido</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        {% for plugin in results.plugins %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="plugin-item
+                                {% if plugin.status == 'Active' %}plugin-active
+                                {% elif plugin.status == 'Inactive' %}plugin-inactive
+                                {% else %}plugin-unknown{% endif %}">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <strong>{{ plugin.name }}</strong>
+                                    <span class="badge {% if plugin.status == 'Active' %}bg-success
+                                        {% elif plugin.status == 'Inactive' %}bg-secondary
+                                        {% else %}bg-info{% endif %} rounded-pill">
+                                        {% if plugin.status == 'Active' %}Ativo
+                                        {% elif plugin.status == 'Inactive' %}Inativo
+                                        {% else %}?{% endif %}
+                                    </span>
+                                </div>
+                                {% if plugin.version %}
+                                <div class="text-muted mt-1">
+                                    <i class="bi bi-tag me-1"></i>{{ plugin.version }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>Nenhum plugin detectado
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Vulnerabilities -->
+                <div class="section">
+                    <h3 class="section-title"><i class="bi bi-shield-exclamation me-2"></i>Vulnerabilidades</h3>
+                    {% if results.vulnerabilities %}
+                    <div class="accordion" id="vulnerabilitiesAccordion">
+                        {% for vuln in results.vulnerabilities %}
+                        <div class="accordion-item mb-3">
+                            <h2 class="accordion-header" id="heading-vuln-{{ loop.index }}">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                        data-bs-target="#collapse-vuln-{{ loop.index }}" aria-expanded="false"
+                                        aria-controls="collapse-vuln-{{ loop.index }}">
+                                    <div class="vulnerability-header w-100">
+                                        <div class="d-flex justify-content-between align-items-center flex-wrap">
+                                            <div class="d-flex align-items-center">
+                                                <i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>
+                                                <span class="fw-bold">{{ vuln.description }}</span>
+                                            </div>
+                                            <span class="badge bg-danger ms-2">Crítico</span>
+                                        </div>
+                                        {% if vuln.type == 'plugin' %}
+                                        <div class="small text-muted mt-1">
+                                            <i class="bi bi-puzzle me-1"></i>Plugin Afetado: {{ vuln.name }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </button>
+                            </h2>
+                            <div id="collapse-vuln-{{ loop.index }}" class="accordion-collapse collapse"
+                                 aria-labelledby="heading-vuln-{{ loop.index }}" data-bs-parent="#vulnerabilitiesAccordion">
+                                <div class="accordion-body">
+                                    <div class="vulnerability">
+                                        <h6 class="fw-bold">
+                                            <i class="bi bi-lightbulb me-2"></i>Recomendação:
+                                        </h6>
+                                        <p>{{ vuln.recommendation }}</p>
+
+                                        <h6 class="fw-bold mt-4">
+                                            <i class="bi bi-tools me-2"></i>Como corrigir:
+                                        </h6>
+                                {% if 'enumeração de usuários' in vuln.description %}
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <strong>Opção 1: Adicionar regras ao arquivo .htaccess</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <ol>
+                                            <li>Acesse o diretório raiz do seu WordPress via FTP ou gerenciador de arquivos do seu hosting</li>
+                                            <li>Edite o arquivo <code>.htaccess</code> (ou crie-o se não existir)</li>
+                                            <li>Adicione as seguintes regras ao arquivo:</li>
+                                        </ol>
+                                        <pre class="bg-light p-3 rounded"><code># Bloquear enumeração de usuários
+# Bloqueia ?author=X
+RewriteCond %{QUERY_STRING} author=\d+
+RewriteRule .* - [R=403,L]
+
+# Bloqueia /author/username/
+RewriteRule ^author/.*$ - [R=403,L]</code></pre>
+                                        <p class="mt-2">Salve o arquivo e teste acessando <code>seu-site.com/?author=1</code> para verificar se o bloqueio está funcionando.</p>
+                                    </div>
+                                </div>
+
+                                <div class="card mt-3">
+                                    <div class="card-header bg-light">
+                                        <strong>Opção 2: Instalar um plugin de segurança</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <ol>
+                                            <li>Acesse o painel administrativo do WordPress</li>
+                                            <li>Vá para "Plugins" > "Adicionar novo"</li>
+                                            <li>Pesquise por "Wordfence Security" ou "iThemes Security"</li>
+                                            <li>Instale e ative o plugin escolhido</li>
+                                            <li>Configure o plugin seguindo as instruções:</li>
+                                        </ol>
+                                        <p><strong>Para Wordfence:</strong></p>
+                                        <ul>
+                                            <li>Vá para "Wordfence" > "Firewall"</li>
+                                            <li>Ative a opção "Prevent discovery of usernames through '/?author=N' scans"</li>
+                                        </ul>
+                                        <p><strong>Para iThemes Security:</strong></p>
+                                        <ul>
+                                            <li>Vá para "Segurança" > "Configurações"</li>
+                                            <li>Encontre a seção "Tweaks" ou "Ajustes"</li>
+                                            <li>Ative a opção "Disable users enumeration"</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                {% elif 'API REST expõe' in vuln.description %}
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <strong>Opção 1: Restringir acesso à API REST</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <ol>
+                                            <li>Acesse o diretório raiz do seu WordPress via FTP ou gerenciador de arquivos do seu hosting</li>
+                                            <li>Edite o arquivo <code>functions.php</code> do seu tema atual</li>
+                                            <li>Adicione o seguinte código ao final do arquivo:</li>
+                                        </ol>
+                                        <pre class="bg-light p-3 rounded"><code>// Restringir acesso à API REST para usuários não autenticados
+add_filter('rest_authentication_errors', function($result) {
+// Se um usuário não está autenticado, bloqueia o acesso à API
+if (!is_user_logged_in()) {
+    return new WP_Error(
+        'rest_forbidden',
+        __('Você precisa estar autenticado para acessar a API REST.'),
+        array('status' => 401)
+    );
+}
+
+// Se o usuário está autenticado ou há outro erro, retorna o resultado
+return $result;
+});</code></pre>
+                                        <p class="mt-2">Salve o arquivo e teste acessando <code>seu-site.com/wp-json/wp/v2/users</code> para verificar se o acesso está bloqueado.</p>
+                                    </div>
+                                </div>
+
+                                <div class="card mt-3">
+                                    <div class="card-header bg-light">
+                                        <strong>Opção 2: Usar um plugin para restringir a API REST</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <ol>
+                                            <li>Acesse o painel administrativo do WordPress</li>
+                                            <li>Vá para "Plugins" > "Adicionar novo"</li>
+                                            <li>Pesquise por "Disable REST API" ou "REST API Controls"</li>
+                                            <li>Instale e ative o plugin escolhido</li>
+                                            <li>Configure o plugin para restringir o acesso aos endpoints sensíveis da API</li>
+                                        </ol>
+                                        <p>Estes plugins permitem que você controle quais endpoints da API REST estão disponíveis e para quais usuários, mantendo a funcionalidade necessária para o seu site.</p>
+                                    </div>
+                                </div>
+                                {% elif 'WordPress' in vuln.description and 'desatualizado' in vuln.description %}
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <strong>Como atualizar o WordPress</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <ol>
+                                            <li>Faça um backup completo do seu site (arquivos e banco de dados)</li>
+                                            <li>Acesse o painel administrativo do WordPress</li>
+                                            <li>Vá para "Painel" > "Atualizações"</li>
+                                            <li>Clique no botão "Atualizar WordPress"</li>
+                                            <li>Aguarde a conclusão do processo de atualização</li>
+                                            <li>Verifique se o site está funcionando corretamente após a atualização</li>
+                                        </ol>
+                                        <div class="alert alert-warning">
+                                            <strong>Importante:</strong> Sempre faça um backup completo antes de atualizar o WordPress, pois algumas atualizações podem causar incompatibilidade com temas ou plugins.
+                                        </div>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="alert alert-info">
+                                    <p>Para corrigir esta vulnerabilidade, siga as recomendações gerais:</p>
+                                    <ol>
+                                        <li>Mantenha o WordPress, temas e plugins sempre atualizados</li>
+                                        <li>Remova plugins e temas não utilizados</li>
+                                        <li>Use senhas fortes e únicas para todas as contas</li>
+                                        <li>Considere usar um plugin de segurança como Wordfence ou Sucuri</li>
+                                        <li>Faça backups regulares do seu site</li>
+                                    </ol>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p>Nenhuma vulnerabilidade óbvia detectada</p>
+            {% endif %}
+        </div>
+
+                <!-- Improvements -->
+                <div class="section">
+                    <h3 class="section-title"><i class="bi bi-lightbulb me-2"></i>Melhorias Sugeridas</h3>
+                    {% if results.improvements %}
+                    <div class="accordion" id="improvementsAccordion">
+                        {% for imp in results.improvements %}
+                        <div class="accordion-item mb-3">
+                            <h2 class="accordion-header" id="heading-imp-{{ loop.index }}">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                        data-bs-target="#collapse-imp-{{ loop.index }}" aria-expanded="false"
+                                        aria-controls="collapse-imp-{{ loop.index }}">
+                                    <div class="improvement-header w-100">
+                                        <div class="d-flex justify-content-between align-items-center flex-wrap">
+                                            <div class="d-flex align-items-center">
+                                                <i class="bi 
+                                                    {% if imp.type == 'critical' %}bi-exclamation-circle-fill text-danger
+                                                    {% elif imp.type == 'medium' %}bi-exclamation-triangle-fill text-warning
+                                                    {% else %}bi-info-circle-fill text-success{% endif %} me-2"></i>
+                                                <span class="fw-bold">{{ imp.description }}</span>
+                                            </div>
+                                            <span class="badge
+                                                {% if imp.type == 'critical' %}bg-danger
+                                                {% elif imp.type == 'medium' %}bg-warning text-dark
+                                                {% else %}bg-success{% endif %} ms-2">
+                                                {% if imp.type == 'critical' %}CRÍTICO
+                                                {% elif imp.type == 'medium' %}MÉDIO
+                                                {% else %}BAIXO{% endif %}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </button>
+                            </h2>
+                            <div id="collapse-imp-{{ loop.index }}" class="accordion-collapse collapse"
+                                 aria-labelledby="heading-imp-{{ loop.index }}" data-bs-parent="#improvementsAccordion">
+                                <div class="accordion-body">
+                                    <div class="
+                                        {% if imp.type == 'critical' %}improvement-critical
+                                        {% elif imp.type == 'medium' %}improvement-medium
+                                        {% else %}improvement-low{% endif %} p-3">
+                                        <h6 class="fw-bold">
+                                            <i class="bi bi-lightbulb me-2"></i>Recomendação:
+                                        </h6>
+                                        <p>{{ imp.recommendation }}</p>
+
+                                        <h6 class="fw-bold mt-4">
+                                            <i class="bi bi-gear me-2"></i>Como implementar:
+                                        </h6>
+                                {% if 'wp-config.php' in imp.description %}
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <strong>Bloquear acesso ao wp-config.php</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <p>Adicione as seguintes regras ao seu arquivo <code>.htaccess</code>:</p>
+                                        <pre class="bg-light p-3 rounded"><code># Proteger wp-config.php
+&lt;files wp-config.php&gt;
+order allow,deny
+deny from all
+&lt;/files&gt;</code></pre>
+                                        <p class="mt-3">Alternativamente, você pode mover o arquivo wp-config.php para um diretório acima da raiz do WordPress:</p>
+                                        <ol>
+                                            <li>Faça backup do seu arquivo wp-config.php</li>
+                                            <li>Mova o arquivo para o diretório pai do diretório raiz do WordPress</li>
+                                            <li>Verifique se o site ainda funciona corretamente</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                                {% elif 'Listagem de diretórios' in imp.description %}
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <strong>Desabilitar listagem de diretórios</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <p>Adicione a seguinte linha ao seu arquivo <code>.htaccess</code>:</p>
+                                        <pre class="bg-light p-3 rounded"><code># Desabilitar listagem de diretórios
+Options -Indexes</code></pre>
+                                        <p class="mt-3">Se você estiver usando Nginx, adicione o seguinte ao seu arquivo de configuração:</p>
+                                        <pre class="bg-light p-3 rounded"><code>location / {
+autoindex off;
+}</code></pre>
+                                    </div>
+                                </div>
+                                {% elif 'readme.html' in imp.description %}
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <strong>Remover ou restringir acesso ao readme.html</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>Opção 1: Remover o arquivo</strong></p>
+                                        <ol>
+                                            <li>Acesse o diretório raiz do seu WordPress via FTP ou gerenciador de arquivos</li>
+                                            <li>Exclua o arquivo readme.html</li>
+                                        </ol>
+
+                                        <p class="mt-3"><strong>Opção 2: Bloquear acesso via .htaccess</strong></p>
+                                        <p>Adicione as seguintes regras ao seu arquivo <code>.htaccess</code>:</p>
+                                        <pre class="bg-light p-3 rounded"><code># Bloquear acesso ao readme.html
+&lt;files readme.html&gt;
+order allow,deny
+deny from all
+&lt;/files&gt;</code></pre>
+                                    </div>
+                                </div>
+                                {% elif 'XML-RPC' in imp.description %}
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <strong>Desabilitar ou restringir XML-RPC</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>Opção 1: Bloquear completamente via .htaccess</strong></p>
+                                        <p>Adicione as seguintes regras ao seu arquivo <code>.htaccess</code>:</p>
+                                        <pre class="bg-light p-3 rounded"><code># Bloquear XML-RPC
+&lt;Files xmlrpc.php&gt;
+order deny,allow
+deny from all
+&lt;/Files&gt;</code></pre>
+
+                                        <p class="mt-3"><strong>Opção 2: Desabilitar via functions.php</strong></p>
+                                        <p>Adicione o seguinte código ao arquivo <code>functions.php</code> do seu tema:</p>
+                                        <pre class="bg-light p-3 rounded"><code>// Desabilitar XML-RPC
+add_filter('xmlrpc_enabled', '__return_false');</code></pre>
+
+                                        <p class="mt-3"><strong>Opção 3: Usar um plugin</strong></p>
+                                        <ol>
+                                            <li>Acesse o painel administrativo do WordPress</li>
+                                            <li>Vá para "Plugins" > "Adicionar novo"</li>
+                                            <li>Pesquise por "Disable XML-RPC"</li>
+                                            <li>Instale e ative um plugin que desabilite XML-RPC</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                                {% elif 'Modo de depuração' in imp.description %}
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <strong>Desativar o modo de depuração do WordPress</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <ol>
+                                            <li>Acesse o arquivo <code>wp-config.php</code> do seu WordPress</li>
+                                            <li>Localize as seguintes linhas:</li>
+                                        </ol>
+                                        <pre class="bg-light p-3 rounded"><code>define('WP_DEBUG', true);
+define('WP_DEBUG_LOG', true);
+define('WP_DEBUG_DISPLAY', true);</code></pre>
+                                        <ol start="3">
+                                            <li>Altere-as para:</li>
+                                        </ol>
+                                        <pre class="bg-light p-3 rounded"><code>define('WP_DEBUG', false);
+define('WP_DEBUG_LOG', false);
+define('WP_DEBUG_DISPLAY', false);</code></pre>
+                                        <p class="mt-3">Se você precisar do log de depuração para desenvolvimento, mas não quer expô-lo publicamente:</p>
+                                        <pre class="bg-light p-3 rounded"><code>define('WP_DEBUG', true);
+define('WP_DEBUG_LOG', true);
+define('WP_DEBUG_DISPLAY', false);</code></pre>
+                                        <p>E adicione ao seu .htaccess:</p>
+                                        <pre class="bg-light p-3 rounded"><code># Proteger debug.log
+&lt;files debug.log&gt;
+order allow,deny
+deny from all
+&lt;/files&gt;</code></pre>
+                                    </div>
+                                </div>
+                                {% elif 'HTTPS' in imp.description %}
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <strong>Implementar SSL/TLS (HTTPS)</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>Passo 1: Obter um certificado SSL</strong></p>
+                                        <ol>
+                                            <li>Verifique se sua hospedagem oferece certificados SSL gratuitos (Let's Encrypt)</li>
+                                            <li>Acesse o painel de controle da sua hospedagem</li>
+                                            <li>Procure por opções como "SSL/TLS", "Segurança" ou "Let's Encrypt"</li>
+                                            <li>Siga as instruções para instalar o certificado para seu domínio</li>
+                                        </ol>
+
+                                        <p class="mt-3"><strong>Passo 2: Configurar WordPress para usar HTTPS</strong></p>
+                                        <ol>
+                                            <li>Acesse o painel administrativo do WordPress</li>
+                                            <li>Vá para "Configurações" > "Geral"</li>
+                                            <li>Altere "Endereço do WordPress (URL)" e "Endereço do site (URL)" para usar https:// em vez de http://</li>
+                                            <li>Salve as alterações</li>
+                                        </ol>
+
+                                        <p class="mt-3"><strong>Passo 3: Forçar redirecionamento para HTTPS</strong></p>
+                                        <p>Adicione as seguintes regras ao seu arquivo <code>.htaccess</code>:</p>
+                                        <pre class="bg-light p-3 rounded"><code># Forçar HTTPS
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]</code></pre>
+
+                                        <p class="mt-3"><strong>Passo 4: Corrigir conteúdo misto</strong></p>
+                                        <ol>
+                                            <li>Use um plugin como "Really Simple SSL" ou "SSL Insecure Content Fixer" para corrigir conteúdo misto</li>
+                                            <li>Verifique seu site usando ferramentas como o Chrome DevTools para identificar conteúdo misto</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                                {% elif 'HSTS' in imp.description %}
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <strong>Implementar HTTP Strict Transport Security (HSTS)</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>Opção 1: Via .htaccess (Apache)</strong></p>
+                                        <p>Adicione a seguinte linha ao seu arquivo <code>.htaccess</code>:</p>
+                                        <pre class="bg-light p-3 rounded"><code># Adicionar cabeçalho HSTS
+Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" env=HTTPS</code></pre>
+
+                                        <p class="mt-3"><strong>Opção 2: Via configuração do Nginx</strong></p>
+                                        <p>Adicione a seguinte linha ao bloco server do seu arquivo de configuração Nginx:</p>
+                                        <pre class="bg-light p-3 rounded"><code>add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;</code></pre>
+
+                                        <p class="mt-3"><strong>Opção 3: Via plugin WordPress</strong></p>
+                                        <ol>
+                                            <li>Instale e ative um plugin como "Really Simple SSL" ou "HTTP Headers"</li>
+                                            <li>Configure o plugin para adicionar o cabeçalho HSTS</li>
+                                        </ol>
+
+                                        <div class="alert alert-warning mt-3">
+                                            <strong>Atenção:</strong> Antes de implementar HSTS, certifique-se de que seu site está funcionando corretamente com HTTPS. Uma vez implementado, os navegadores não permitirão conexões não-HTTPS por um longo período.
+                                        </div>
+                                    </div>
+                                </div>
+                                {% elif 'WAF' in imp.description %}
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <strong>Implementar um Firewall de Aplicação Web (WAF)</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>Opção 1: Cloudflare (Serviço de WAF baseado em nuvem)</strong></p>
+                                        <ol>
+                                            <li>Crie uma conta gratuita em <a href="https://www.cloudflare.com" target="_blank">cloudflare.com</a></li>
+                                            <li>Adicione seu domínio ao Cloudflare</li>
+                                            <li>Siga as instruções para alterar seus servidores DNS para os do Cloudflare</li>
+                                            <li>Ative o nível de segurança desejado no painel do Cloudflare</li>
+                                        </ol>
+
+                                        <p class="mt-3"><strong>Opção 2: Wordfence (Plugin de segurança para WordPress)</strong></p>
+                                        <ol>
+                                            <li>Acesse o painel administrativo do WordPress</li>
+                                            <li>Vá para "Plugins" > "Adicionar novo"</li>
+                                            <li>Pesquise por "Wordfence Security"</li>
+                                            <li>Instale e ative o plugin</li>
+                                            <li>Configure o firewall seguindo o assistente de configuração</li>
+                                        </ol>
+
+                                        <p class="mt-3"><strong>Opção 3: Sucuri (Serviço de segurança para WordPress)</strong></p>
+                                        <ol>
+                                            <li>Visite <a href="https://sucuri.net" target="_blank">sucuri.net</a> e registre-se para uma conta</li>
+                                            <li>Escolha um plano adequado às suas necessidades</li>
+                                            <li>Siga as instruções para integrar o Sucuri ao seu site WordPress</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="alert alert-info">
+                                    <p>Para implementar esta melhoria, siga as recomendações gerais:</p>
+                                    <ol>
+                                        <li>Faça backup do seu site antes de realizar qualquer alteração</li>
+                                        <li>Teste as alterações em um ambiente de desenvolvimento antes de aplicá-las em produção</li>
+                                        <li>Consulte a documentação oficial do WordPress ou do seu provedor de hospedagem para instruções específicas</li>
+                                        <li>Considere contratar um profissional de segurança WordPress se não tiver certeza sobre como implementar corretamente</li>
+                                    </ol>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p>Nenhuma melhoria óbvia necessária</p>
+            {% endif %}
+        </div>
+
+                <!-- SSL/TLS Security -->
+                {% if results.additional_info and 'ssl' in results.additional_info %}
+                <div class="section">
+                    <h3 class="section-title"><i class="bi bi-lock me-2"></i>Segurança SSL/TLS</h3>
+                    <div class="card">
+                        <div class="card-body">
+                            {% if results.additional_info.ssl.enabled %}
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="ssl-icon me-3 success">
+                                    <i class="bi bi-shield-check"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1">SSL Ativado</h5>
+                                    <p class="mb-0 text-success">O site está usando HTTPS para conexões seguras.</p>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <div class="ssl-icon me-3 {% if results.additional_info.ssl.hsts %}success{% else %}warning{% endif %}">
+                                    <i class="bi bi-{% if results.additional_info.ssl.hsts %}shield-check{% else %}shield-exclamation{% endif %}"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1">HSTS</h5>
+                                    {% if results.additional_info.ssl.hsts %}
+                                    <p class="mb-0 text-success">HSTS está implementado, forçando conexões HTTPS.</p>
+                                    {% else %}
+                                    <p class="mb-0 text-warning">HSTS não está implementado. Considere ativar para maior segurança.</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="d-flex align-items-center">
+                                <div class="ssl-icon me-3 danger">
+                                    <i class="bi bi-shield-x"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1">SSL Não Ativado</h5>
+                                    <p class="mb-0 text-danger">O site não está usando HTTPS, o que pode comprometer a segurança dos dados.</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- WAF Detection -->
+                {% if results.additional_info and 'waf' in results.additional_info %}
+                <div class="section">
+                    <h3 class="section-title"><i class="bi bi-shield-lock me-2"></i>Firewall de Aplicação Web (WAF)</h3>
+                    <div class="card">
+                        <div class="card-body">
+                            {% if results.additional_info.waf.detected %}
+                            <div class="d-flex align-items-center">
+                                <div class="waf-icon me-3 success">
+                                    <i class="bi bi-shield-check"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1">WAF Detectado</h5>
+                                    <p class="mb-0 text-success">{{ results.additional_info.waf.name }} está protegendo o site.</p>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="d-flex align-items-center">
+                                <div class="waf-icon me-3 warning">
+                                    <i class="bi bi-shield-exclamation"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1">WAF Não Detectado</h5>
+                                    <p class="mb-0 text-warning">Nenhum Firewall de Aplicação Web foi detectado. Considere implementar um WAF para proteção adicional.</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- User Information -->
+                {% if results.additional_info and 'users' in results.additional_info and results.additional_info.users %}
+                <div class="section">
+                    <h3 class="section-title"><i class="bi bi-people me-2"></i>Usuários Detectados</h3>
+                    <div class="alert alert-danger mb-3">
+                        <div class="d-flex">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            <div>A API REST do WordPress está expondo informações de usuários, o que pode facilitar ataques.</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        {% for user in results.additional_info.users %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="vulnerability">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-person-circle me-2"></i>
+                                    <strong>{{ user.name }}</strong>
+                                </div>
+                                <p class="mb-1"><i class="bi bi-hash me-2"></i><strong>ID:</strong> {{ user.id }}</p>
+                                {% if user.slug %}
+                                <p class="mb-0"><i class="bi bi-link-45deg me-2"></i><strong>Slug:</strong> {{ user.slug }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Hosting Information -->
+                <div class="section">
+                    <h3 class="section-title"><i class="bi bi-hdd-rack me-2"></i>Informações de Hospedagem</h3>
+                    {% if results.hosting and 'error' not in results.hosting %}
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="hosting-info-item">
+                                        <i class="bi bi-globe me-2"></i>
+                                        <strong>Endereço IP:</strong> {{ results.hosting.ip }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="hosting-info-item">
+                                        <i class="bi bi-server me-2"></i>
+                                        <strong>Servidor:</strong> {{ results.hosting.server }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="hosting-info-item">
+                                        <i class="bi bi-building me-2"></i>
+                                        <strong>Registrador:</strong> {{ results.hosting.registrar }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="hosting-info-item">
+                                        <i class="bi bi-calendar-plus me-2"></i>
+                                        <strong>Data de Criação:</strong> {{ results.hosting.creation_date }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="hosting-info-item">
+                                        <i class="bi bi-calendar-x me-2"></i>
+                                        <strong>Data de Expiração:</strong> {{ results.hosting.expiration_date }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>Informações de hospedagem não disponíveis
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- DNS Zones -->
+                <div class="section">
+                    <h3 class="section-title"><i class="bi bi-diagram-3 me-2"></i>Zonas DNS</h3>
+                    {% if results.dns_zones %}
+                    <div class="accordion" id="dnsZonesAccordion">
+                        {% for zone in results.dns_zones %}
+                        <div class="accordion-item mb-3">
+                            <h2 class="accordion-header" id="heading-dns-{{ loop.index }}">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                        data-bs-target="#collapse-dns-{{ loop.index }}" aria-expanded="false"
+                                        aria-controls="collapse-dns-{{ loop.index }}">
+                                    <i class="bi bi-list-ul me-2"></i>Registros {{ zone.type }}
+                                </button>
+                            </h2>
+                            <div id="collapse-dns-{{ loop.index }}" class="accordion-collapse collapse"
+                                 aria-labelledby="heading-dns-{{ loop.index }}" data-bs-parent="#dnsZonesAccordion">
+                                <div class="accordion-body">
+                                    {% for record in zone.records %}
+                                    <div class="dns-record">
+                                        <i class="bi bi-file-text me-2"></i>{{ record }}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>Informações DNS não disponíveis
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Back Button -->
+                <div class="text-center back-button">
+                    <a href="/" class="btn btn-primary">
+                        <i class="bi bi-arrow-left me-2"></i>Analisar Outro Site
+                    </a>
+                    <a href="#" class="btn btn-outline-secondary" onclick="window.print()">
+                        <i class="bi bi-printer me-2"></i>Imprimir Resultados
+                    </a>
+                </div>
+
+                <div class="text-center mt-4">
+                    <p class="text-muted small">© 2023 LineHost Cloud. Todos os direitos reservados.</p>
+                </div>
+    </div>
+        </div>
+    </div>
+
+</div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
