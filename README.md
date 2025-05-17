@@ -63,7 +63,7 @@ Uma ferramenta abrangente de análise de sites WordPress que examina temas, plug
 1. Clone este repositório ou baixe o código-fonte:
 
 ```bash
-git clone https://github.com/linehost/wpscan.git
+git clone https://github.com/linehostcloud/linehostwpscan.git
 cd wpscan
 ```
 
